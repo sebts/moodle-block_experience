@@ -42,22 +42,49 @@ class block_experience extends block_base {
     }
 
     function get_content() {
-        global $CFG;
-
-        require_once($CFG->libdir . '/filelib.php');
+        global $CFG, $OUTPUT, $USER;
 
         if ($this->content === null) {
             $this->content = new stdClass;
-            if (isset($CFG->block_experience_subdomain_job)) {
-                $width = isset($this->config->frame_width) ? $this->config->frame_width : get_config('experience', 'default_width');
-                $height = isset($this->config->frame_height) ? $this->config->frame_height : get_config('experience', 'default_height');
-                $this->content->text = "<iframe onload='return false' id='experience' " .
-                    "src='http://{$CFG->block_experience_subdomain_job}.experience.com/stu/gadget' " .
-                    "framespacing='0' frameborder='0' " .
-                    "style='width: {$width}px; height: {$height}px; margin-left: auto; margin-right: auto; display: block;' " .
-                    "></iframe>";
+            if (isloggedin() && !isguestuser()) {
+                if (isset($CFG->block_experience_subdomain_job)) {
+                    $width = isset($this->config->frame_width) ? $this->config->frame_width : get_config('experience', 'default_width');
+                    $height = isset($this->config->frame_height) ? $this->config->frame_height : get_config('experience', 'default_height');
+                    $this->content->text = html_writer::tag('iframe', null, array(
+                        'id' => 'experience',
+                        'onload' => 'return false;',
+                        'src' => "http://{$CFG->block_experience_subdomain_job}.experience.com/stu/gadget",
+                        'framespacing' => '0',
+                        'frameborder' => '0',
+                        'style' => "width: {$width}px; height: {$height}px; display: block; margin: 0 auto;",
+                    ));
+
+                    if (isset($CFG->block_experience_subdomain_sso)) {
+                        $timestamp = time()*1000;
+                        $registerUrl = new moodle_url("https://{$CFG->block_experience_subdomain_sso}.experience.com/j_exp_sso_security_check",
+                            array(
+                                'k' => $USER->username,
+                                'fn' => $USER->firstname,
+                                'ln' => $USER->lastname,
+                                'eid' => $USER->email,
+                                't' => md5($USER->username . ':' . $CFG->block_experience_secret . ':' . $timestamp),
+                                'ts' => $timestamp,
+                                'auth_target_url' => "https://{$CFG->block_experience_subdomain_job}.experience.com/stu/home"
+                            ));
+                        $registerBtn = $OUTPUT->single_button($registerUrl, get_string('link_register', 'block_experience'), 'get');
+
+                        $signInUrl = "https://{$CFG->block_experience_subdomain_job}.experience.com/er/security/login.jsp";
+                        $signInBtn = $OUTPUT->single_button($signInUrl, get_string('link_signin', 'block_experience'), 'get');
+
+                        $this->content->footer =
+                            html_writer::tag('div',
+                            $registerBtn . $signInBtn,
+                            array('style' => 'display: flex; justify-content: center;'));
+                    }
+                }
+            } else {
+                $this->content->text = get_string('update_settings', 'block_experience');
             }
-            $this->content->footer = ''; // Put register and SSO links here.
         }
         return $this->content;
     }
