@@ -26,21 +26,15 @@ defined('MOODLE_INTERNAL') || die;
 
 if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configtext(
-        'block_experience_subdomain_job',
-        get_string('global_subdomain_job', 'block_experience'),
-        get_string('global_subdomain_job_desc', 'block_experience'),
+        'block_experience_subdomain',
+        get_string('global_subdomain', 'block_experience'),
+        get_string('global_subdomain_desc', 'block_experience'),
         ''
     ));
     $settings->add(new admin_setting_configtext(
-        'block_experience_subdomain_sso',
-        get_string('global_subdomain_sso', 'block_experience'),
-        get_string('global_subdomain_sso_desc', 'block_experience'),
-        ''
-    ));
-    $settings->add(new admin_setting_configtext(
-        'block_experience_secret',
-        get_string('global_secret', 'block_experience'),
-        get_string('global_secret_desc', 'block_experience'),
+        'block_experience_token',
+        get_string('global_token', 'block_experience'),
+        get_string('global_token_desc', 'block_experience'),
         ''
     ));
     $settings->add(new admin_setting_configtext(

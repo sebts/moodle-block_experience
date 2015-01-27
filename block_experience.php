@@ -47,43 +47,41 @@ class block_experience extends block_base {
         if ($this->content === null) {
             $this->content = new stdClass;
             if (isloggedin() && !isguestuser()) {
-                if (isset($CFG->block_experience_subdomain_job)) {
-                    $width = isset($this->config->frame_width) ? $this->config->frame_width : get_config('experience', 'default_width');
-                    $height = isset($this->config->frame_height) ? $this->config->frame_height : get_config('experience', 'default_height');
+                if (!empty($CFG->block_experience_subdomain)) {
+                    $width = !empty($this->config->frame_width) ? $this->config->frame_width : get_config('experience', 'default_width');
+                    $height = !empty($this->config->frame_height) ? $this->config->frame_height : get_config('experience', 'default_height');
                     $this->content->text = html_writer::tag('iframe', null, array(
                         'id' => 'experience',
                         'onload' => 'return false;',
-                        'src' => "http://{$CFG->block_experience_subdomain_job}.experience.com/stu/gadget",
+                        'src' => "http://{$CFG->block_experience_subdomain}.experience.com/stu/gadget",
                         'framespacing' => '0',
                         'frameborder' => '0',
                         'style' => "width: {$width}px; height: {$height}px; display: block; margin: 0 auto;",
                     ));
 
-                    if (isset($CFG->block_experience_subdomain_sso)) {
-                        $timestamp = time()*1000;
-                        $registerUrl = new moodle_url("https://{$CFG->block_experience_subdomain_sso}.experience.com/j_exp_sso_security_check",
-                            array(
-                                'k' => $USER->username,
-                                'fn' => $USER->firstname,
-                                'ln' => $USER->lastname,
-                                'eid' => $USER->email,
-                                't' => md5($USER->username . ':' . $CFG->block_experience_secret . ':' . $timestamp),
-                                'ts' => $timestamp,
-                                'auth_target_url' => "https://{$CFG->block_experience_subdomain_job}.experience.com/stu/home"
-                            ));
-                        $registerBtn = $OUTPUT->single_button($registerUrl, get_string('link_register', 'block_experience'), 'get');
+                    $registerUrl = new moodle_url("https://{$CFG->block_experience_subdomain}.experience.com/er/speedbump/token_required.jsp",
+                        array(
+                            'token' => $CFG->block_experience_token,
+                        ));
+                    $registerBtn = $OUTPUT->single_button($registerUrl, get_string('link_register', 'block_experience'), 'post');
 
-                        $signInUrl = "https://{$CFG->block_experience_subdomain_job}.experience.com/er/security/login.jsp";
-                        $signInBtn = $OUTPUT->single_button($signInUrl, get_string('link_signin', 'block_experience'), 'get');
+                    $signInUrl = "https://{$CFG->block_experience_subdomain}.experience.com/er/security/login.jsp";
+                    $signInBtn = $OUTPUT->single_button($signInUrl, get_string('link_signin', 'block_experience'), 'get');
 
-                        $this->content->footer =
-                            html_writer::tag('div',
-                            $registerBtn . $signInBtn,
-                            array('style' => 'display: flex; justify-content: center;'));
+                    $this->content->footer =
+                        html_writer::tag('div',
+                        $registerBtn . $signInBtn,
+                        array('style' => 'display: flex; justify-content: center;'));
+                } else {
+                    if (has_capability('moodle/site:manageblocks', context_system::instance())) {
+                        $settingLink = $OUTPUT->action_link('/admin/settings.php?section=blocksettingexperience',
+                            get_string('update_settings_admin_title', 'block_experience'));
+                        $this->content->text = sprintf(get_string('update_settings_admin', 'block_experience'), $settingLink);
+                    }
+                    else {
+                        $this->content->text = get_string('update_settings_user', 'block_experience');
                     }
                 }
-            } else {
-                $this->content->text = get_string('update_settings', 'block_experience');
             }
         }
         return $this->content;
